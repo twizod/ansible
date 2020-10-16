@@ -1,0 +1,14 @@
+---
+- hosts: eos_switches
+  gather_facts: yes
+  connection: local
+
+  tasks:
+    - name: Collect all facts from device  
+      eos_facts:
+        gather_subset:
+          - all
+      register: facts 
+    - name: Display result
+      debug:
+        msg: "Model is {{facts.ansible_facts.ansible_net_model}} and it is running {{facts.ansible_facts.ansible_net_version}}"

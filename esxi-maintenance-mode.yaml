@@ -1,0 +1,33 @@
+---
+- hosts: esxis
+  vars_files:
+    - ./group_vars/vmware-secrets.yml
+  gather_facts: no
+  tasks:
+  - name: include vars
+    include_vars:
+      dir: group_vars
+
+  - name: Enter VSAN-Compliant Maintenance Mode
+    vmware_maintenancemode:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      esxi_hostname: "{{ inventory_hostname }}"  ##The inventory name for the ‘current’ host being iterated over in the play - special ansible variable 
+      vsan: ensureObjectAccessibility
+      evacuate: yes
+      timeout: 3600
+      state: "{{ mode }}" ##"present" to enter MM or "absent" to exit it
+      validate_certs: False
+    delegate_to: localhost
+    register: output
+
+  - debug: var={{ item }}
+    loop:
+      - output.msg
+      - output.status
+
+# Worked with "ansible-playbook esxi-maintenance-mode.yaml --ask-vault-pass -e "mode=absent""  WOOHOO!!!!!!
+# Version 2.0 now using ansible-vault to encrypt vmware administstrator@vsphere.local password in a file then use that variable in playbook running command:
+#    #prompt> ansible-playbook --vault-id @prompt esxi-maintenance-mode.yaml -e "mode=absent" -vvvv      ##STILL NEED VAULT PASSWORD TO RUN THOUGH
+#    DEBUG command for above command: ansible -m debug -a 'var=hostvars[inventory_hostname]' -i /home/twizod/ansible/hosts all
